@@ -1,0 +1,12 @@
+{
+  "pair": {
+    "title": "Adding Everything Presence One",
+    "description": "Make sure your Everything Presence One is flashed with the ESPHome firmware, powered on and on the same Wi-Fi network as Homey Pro. For instructions on how to flash click the button below.",
+    "button": "Read more"
+  },
+  "error": {
+    "unavailable": "Could not connect, make sure the device is powered on.",
+    "unavailable_encrypted": "Could not connect, disable encryption on your device.",
+    "connect_timeout": "Connect timeout, make sure the device is powered on."
+  }
+}

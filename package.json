@@ -1,0 +1,32 @@
+{
+  "name": "io.everythingsmart",
+  "version": "1.0.0",
+  "main": "app.ts",
+  "scripts": {
+    "build": "tsc && npm run format && homey app build",
+    "lint": "eslint --ext .js,.ts --ignore-path .gitignore .",
+    "format": "prettier --write . && homey app build",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.11",
+    "@types/debug": "^4.1.8",
+    "@types/homey": "npm:homey-apps-sdk-v3-types@^0.3.4",
+    "@types/node": "^20.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-athom": "^3.1.1",
+    "eslint-config-prettier": "^8.8.0",
+    "homey": "^2.34.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.2.2",
+    "prettier": "^2.8.8",
+    "prettier-plugin-jsdoc": "^0.4.2",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@2colors/esphome-native-api": "^1.2.3",
+    "debug": "^4.3.4",
+    "source-map-support": "^0.5.21",
+    "zod": "^3.21.4"
+  }
+}
