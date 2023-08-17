@@ -214,6 +214,32 @@ function getErrorMessage(error) {
         return error.message;
     return String(error);
 }
+/**
+ * Check if entity has uniqueId that matches the binary sensor mmWave. Note: it appears that between
+ * 2023.4.2 (1.1.3) and 2023.7.1 (1.1.6) of the EP1 firmware a breaking change was introduced, the
+ * uniqueId binary_sensor_mmwave was changed to binary_sensormmwave. GitHub issue:
+ * https://github.com/EverythingSmartHome/everything-presence-one/issues/99
+ *
+ * @param entity
+ * @returns
+ */
+function includesBinarySensorMMWave(entity) {
+    return (entity.config.uniqueId.includes('binary_sensor_mmwave') ||
+        entity.config.uniqueId.includes('binary_sensormmwave'));
+}
+/**
+ * Check if entity has uniqueId that matches the binary sensor occupancy. Note: it appears that
+ * between 2023.4.2 (1.1.3) and 2023.7.1 (1.1.6) of the EP1 firmware a breaking change was
+ * introduced, the uniqueId binary_sensor_occupancy was changed to binary_sensoroccupancy. GitHub
+ * issue: https://github.com/EverythingSmartHome/everything-presence-one/issues/99
+ *
+ * @param entity
+ * @returns
+ */
+function includesBinarySensorOccupancy(entity) {
+    return (entity.config.uniqueId.includes('binary_sensor_occupancy') ||
+        entity.config.uniqueId.includes('binary_sensoroccupancy'));
+}
 class EverythingPresenceOneDevice extends homey_1.default.Device {
     constructor() {
         super(...arguments);
@@ -274,7 +300,9 @@ class EverythingPresenceOneDevice extends homey_1.default.Device {
                 this.debugClient('connected', addressProps);
                 this.homey.clearTimeout(connectTimeout);
                 // Fetch all entities
-                this.client.connection.listEntitiesService();
+                this.client.connection.listEntitiesService().catch((err) => {
+                    this.error('Failed to list entities service:', err);
+                });
                 // Resolve hostname to ip address
                 promises_1.default
                     .lookup(addressProps.host)
@@ -395,11 +423,11 @@ class EverythingPresenceOneDevice extends homey_1.default.Device {
             case 'occupancy':
                 // Throw when state is not a boolean
                 zod_1.z.boolean().parse(parsedState.state);
-                if (entity.config.uniqueId.includes('binary_sensor_mmwave')) {
+                if (includesBinarySensorMMWave(entity)) {
                     this.debugEntity(`Capability: alarm_motion.mmwave: state event`, parsedState.state);
                     this.setCapabilityValue('alarm_motion.mmwave', parsedState.state).catch((err) => this.debugEntity('Failed to set alarm_motion.mmwave capability value', err));
                 }
-                else if (entity.config.uniqueId.includes('binary_sensor_occupancy')) {
+                else if (includesBinarySensorOccupancy(entity)) {
                     this.debugEntity(`Capability: alarm_motion: state event`, parsedState.state);
                     this.setCapabilityValue('alarm_motion', parsedState.state).catch((err) => this.debugEntity('Failed to set alarm_motion capability value', err));
                 }
@@ -509,9 +537,23 @@ class EverythingPresenceOneDevice extends homey_1.default.Device {
      * @param discoveryResult
      */
     async onDiscoveryAvailable(discoveryResult) {
+        var _a, _b;
         this.debugDiscovery('available', discoveryResult);
-        if (typeof discoveryResult.address === 'string') {
-            this.setSettings({ ip: discoveryResult.address }).catch((err) => {
+        const settings = this.getSettings();
+        if (typeof discoveryResult.address === 'string' && settings.ip !== discoveryResult.address) {
+            settings.ip = discoveryResult.address;
+        }
+        if (typeof ((_a = discoveryResult.txt) === null || _a === void 0 ? void 0 : _a.version) === 'string' &&
+            settings.esp_home_version !== discoveryResult.txt.version) {
+            settings.esp_home_version = discoveryResult.txt.version;
+        }
+        if (typeof ((_b = discoveryResult.txt) === null || _b === void 0 ? void 0 : _b.project_version) === 'string' &&
+            settings.project_version !== discoveryResult.txt.project_version) {
+            settings.project_version = discoveryResult.txt.project_version;
+        }
+        // Update settings if needed
+        if (Object.keys(settings).length > 0) {
+            this.setSettings(settings).catch((err) => {
                 this.error('Failed to update IP in settings', err);
             });
         }
